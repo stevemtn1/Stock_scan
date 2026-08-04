@@ -1,0 +1,9 @@
+{
+  "name": "Swing Scan",
+  "short_name": "Scan",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#E6E9EE",
+  "theme_color": "#10151F",
+  "orientation": "portrait"
+}

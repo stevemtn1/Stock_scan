@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10151F">
+<title>Swing Scan</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E6E9EE;      /* cool slate paper */
+    --card:#F8F9FB;
+    --ink:#10151F;
+    --muted:#5C6675;
+    --rule:#C9D0DA;
+    --signal:#1A4FA0;     /* entry / trend */
+    --risk:#8C2A2A;       /* stop side */
+    --edge:#0F7A6B;       /* target side */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:Archivo,system-ui,sans-serif;
+    padding:0 0 env(safe-area-inset-bottom);
+  }
+  header{
+    background:var(--ink);color:var(--paper);
+    padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+    position:sticky;top:0;z-index:10;
+  }
+  h1{
+    margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  h1 .count{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;opacity:.65}
+  .meta{
+    margin-top:6px;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;opacity:.6;letter-spacing:.02em;
+  }
+  .sorts{display:flex;gap:6px;margin-top:12px}
+  .sorts button{
+    flex:1;background:transparent;color:var(--paper);
+    border:1px solid rgba(230,233,238,.28);border-radius:2px;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;
+    padding:7px 0;cursor:pointer;letter-spacing:.04em;
+  }
+  .sorts button[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+  .sorts button:focus-visible{outline:2px solid #7FA8E0;outline-offset:2px}
+
+  main{padding:12px 12px 32px;display:flex;flex-direction:column;gap:10px}
+
+  .card{
+    background:var(--card);border:1px solid var(--rule);border-radius:3px;
+    padding:12px 13px 14px;cursor:pointer;
+    animation:rise .3s ease backwards;
+  }
+  .card:active{background:#EEF1F5}
+  @keyframes rise{from{opacity:0;transform:translateY(5px)}}
+  @media (prefers-reduced-motion:reduce){.card{animation:none}}
+
+  .top{display:flex;align-items:baseline;gap:8px}
+  .tk{font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .px{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--muted)}
+  .score{
+    margin-left:auto;font-family:"IBM Plex Mono",monospace;
+    font-size:17px;font-weight:600;color:var(--signal);
+  }
+  .score span{font-size:10px;color:var(--muted);font-weight:400}
+
+  /* signature: the risk rail — stop and target drawn to scale around entry */
+  .rail{margin:13px 0 6px;position:relative;height:26px}
+  .rail .bar{position:absolute;top:9px;height:3px;left:0;right:0;background:var(--rule)}
+  .rail .lose{position:absolute;top:9px;height:3px;background:var(--risk)}
+  .rail .win{position:absolute;top:9px;height:3px;background:var(--edge)}
+  .rail .mark{position:absolute;top:5px;width:2px;height:11px;background:var(--ink)}
+  .rail .lbl{
+    position:absolute;top:19px;font-family:"IBM Plex Mono",monospace;
+    font-size:10px;color:var(--muted);white-space:nowrap;
+  }
+  .rail .lbl.l{left:0}
+  .rail .lbl.r{right:0}
+  .rail .lbl.c{transform:translateX(-50%);color:var(--ink)}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--rule);border:1px solid var(--rule);margin-top:12px;
+  }
+  .stat{background:var(--card);padding:6px 4px;text-align:center}
+  .stat b{
+    display:block;font-family:"IBM Plex Mono",monospace;
+    font-size:13px;font-weight:600;
+  }
+  .stat i{
+    font-style:normal;font-size:9px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;
+  }
+  .why{
+    margin-top:10px;font-size:12px;line-height:1.45;color:var(--muted);
+    border-left:2px solid var(--rule);padding-left:9px;
+  }
+  .state{
+    padding:48px 24px;text-align:center;color:var(--muted);
+    font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.6;
+  }
+  footer{
+    padding:0 16px 28px;font-size:10px;color:var(--muted);
+    line-height:1.5;text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Swing Scan <span class="count" id="count"></span></h1>
+  <div class="meta" id="meta">loading…</div>
+  <div class="sorts" id="sorts">
+    <button data-k="score" aria-pressed="true">SCORE</button>
+    <button data-k="rs20" aria-pressed="false">REL STR</button>
+    <button data-k="rr" aria-pressed="false">R:R</button>
+    <button data-k="cap_m" aria-pressed="false">SIZE</button>
+  </div>
+</header>
+
+<main id="list"><div class="state">Loading picks…</div></main>
+<footer id="foot"></footer>
+
+<script>
+var picks = [], sortKey = "score";
+
+function n(v, d){ return (v === null || v === undefined) ? "—" : Number(v).toFixed(d === undefined ? 1 : d); }
+
+function cap(m){
+  if (m === null || m === undefined) return "—";
+  return m >= 1000 ? (m/1000).toFixed(1) + "B" : Math.round(m) + "M";
+}
+
+function card(p){
+  // rail geometry: stop .. target mapped to full width, entry marked in place
+  var lo = p.stop, hi = p.target, span = (hi - lo) || 1;
+  var entry = Math.max(0, Math.min(100, (p.price - lo) / span * 100));
+
+  var el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML =
+    '<div class="top">' +
+      '<span class="tk"></span>' +
+      '<span class="px">$' + n(p.price, 2) + '</span>' +
+      '<span class="score">' + n(p.score) + '<span>/100</span></span>' +
+    '</div>' +
+    '<div class="rail">' +
+      '<div class="bar"></div>' +
+      '<div class="lose" style="left:0;width:' + entry + '%"></div>' +
+      '<div class="win"  style="left:' + entry + '%;right:0"></div>' +
+      '<div class="mark" style="left:' + entry + '%"></div>' +
+      '<div class="lbl l">stop ' + n(p.stop, 2) + '</div>' +
+      '<div class="lbl c" style="left:' + entry + '%">' + n(p.rr) + 'R</div>' +
+      '<div class="lbl r">' + n(p.target, 2) + ' target</div>' +
+    '</div>' +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + n(p.rsi, 0) + '</b><i>rsi</i></div>' +
+      '<div class="stat"><b>' + n(p.adx, 0) + '</b><i>adx</i></div>' +
+      '<div class="stat"><b>' + n(p.atr_pct) + '%</b><i>atr</i></div>' +
+      '<div class="stat"><b>' + cap(p.cap_m) + '</b><i>cap</i></div>' +
+    '</div>' +
+    (p.why ? '<div class="why"></div>' : '');
+
+  // set text content separately so ticker/reason can't inject markup
+  el.querySelector(".tk").textContent = p.ticker;
+  if (p.why) el.querySelector(".why").textContent = p.why;
+
+  el.addEventListener("click", function(){
+    window.open("https://finance.yahoo.com/quote/" + encodeURIComponent(p.ticker) + "/chart", "_blank");
+  });
+  return el;
+}
+
+function render(){
+  var list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!picks.length){
+    list.innerHTML = '<div class="state">No names passed the filters.<br>' +
+      'That is a market condition, not a bug.</div>';
+    return;
+  }
+  picks.slice().sort(function(a,b){
+    return (b[sortKey] === null ? -1e9 : b[sortKey]) - (a[sortKey] === null ? -1e9 : a[sortKey]);
+  }).forEach(function(p,i){
+    var c = card(p);
+    c.style.animationDelay = Math.min(i*35, 350) + "ms";
+    list.appendChild(c);
+  });
+}
+
+document.getElementById("sorts").addEventListener("click", function(e){
+  var b = e.target.closest("button");
+  if (!b) return;
+  sortKey = b.dataset.k;
+  [].forEach.call(this.querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x === b));
+  });
+  render();
+});
+
+fetch("picks.json?t=" + Date.now())
+  .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+  .then(function(d){
+    picks = d.picks || [];
+    var when = new Date(d.generated);
+    var b = d.benchmark || {};
+    document.getElementById("count").textContent = picks.length + " names";
+    document.getElementById("meta").textContent =
+      when.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + " · " +
+      when.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}) + " · " +
+      (d.cap_tier || "all") + " cap" +
+      (b.ret20 !== undefined ? " · IWM 20d " + (b.ret20>0?"+":"") + b.ret20.toFixed(1) + "%" : "");
+    document.getElementById("foot").textContent = d.disclaimer ||
+      "Screening output only. Not investment advice.";
+    render();
+  })
+  .catch(function(err){
+    document.getElementById("meta").textContent = "no data";
+    document.getElementById("list").innerHTML =
+      '<div class="state">Could not load picks.json.<br><br>' +
+      'Check the scan ran and the file sits beside this page.<br>(' + err.message + ')</div>';
+  });
+</script>
+</body>
+</html>
