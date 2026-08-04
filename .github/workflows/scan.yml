@@ -1,0 +1,51 @@
+name: Swing Scan
+
+on:
+  schedule:
+    # 21:45 UTC weekdays = ~5:45pm ET, after the US close and settled data
+    - cron: "45 21 * * 1-5"
+  workflow_dispatch:        # lets you hit "Run workflow" manually anytime
+
+permissions:
+  contents: write           # needed to commit results back to the repo
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install yfinance pandas numpy lxml
+
+      - name: Run screener
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}   # optional
+        run: python screener.py
+
+      - name: Commit results
+        run: |
+          git config user.name  "swing-scan-bot"
+          git config user.email "actions@github.com"
+          git add docs/picks.json picks_log.csv
+          git diff --staged --quiet || git commit -m "scan $(date -u +%Y-%m-%d)"
+          git push
+
+  review:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '45 21 * * 5'
+    needs: scan
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install yfinance pandas numpy
+      - run: python screener.py --review >> $GITHUB_STEP_SUMMARY
