@@ -1,6 +1,6 @@
 {
-  "generated": "2026-11-26T03:48:11.233250+00:00",
-  "universe_size": 2897,
+  "generated": "2026-11-27T03:49:55.172417+00:00",
+  "universe_size": 2895,
   "passed_filters": 37,
   "cap_tier": "smallmicro",
   "benchmark": {
@@ -211,7 +211,7 @@
       "ticker": "ASTL",
       "score": 63.8,
       "price": 4.86,
-      "cap_m": 512.7,
+      "cap_m": 514.0,
       "rsi": 49.8,
       "adx": 25.1,
       "atr_pct": 7.11,
